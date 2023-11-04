@@ -2,11 +2,13 @@
 ### Imports and setup ###
 #########################
 
+# NOTE: This script is optimized for running as a BATCH job
+
 library(tidyverse)
 library(tidymodels)
+library(discrim)
 library(doParallel)
 
-#setwd('..')
 source('./scripts/ggg_analysis.R')
 PARALLEL <- T
 
@@ -22,49 +24,49 @@ test <- prep_df(vroom::vroom('./data/test.csv'))
 ## Feature Engineering ## 
 #########################
 
-set.seed(843)
+set.seed(42)
 
 ## parallel tune grid
+
 if(PARALLEL){
-  cl <- makePSOCKcluster(8)
+  cl <- makePSOCKcluster(10)
   registerDoParallel(cl)
 }
 
 ## Set up preprocessing
-prepped_recipe <- setup_train_recipe(train, encode=T, pca_threshold=0)
+prepped_recipe <- setup_train_recipe(train, encode=T, pca_threshold=0.8)
 
 ## Bake recipe
 bake(prepped_recipe, new_data=train)
 bake(prepped_recipe, new_data=test)
 
 #########################
-####### Fit Model #######
+## Fit Classifer Model ##
 #########################
 
 ## Define model
-rand_forest_model <- rand_forest(
-  mtry = tune(),
-  min_n = tune(),
-  trees = 1000
-  ) %>%
-  set_engine("ranger") %>%
+bayes_model <- naive_Bayes(
+  Laplace=tune(),
+  smoothness=tune()) %>%
+  set_engine("naivebayes") %>%
   set_mode("classification")
 
 ## Define workflow
-rand_forest_wf <- workflow(prepped_recipe) %>%
-  add_model(rand_forest_model)
+bayes_wf <- workflow() %>%
+  add_recipe(prepped_recipe) %>%
+  add_model(bayes_model)
 
 ## Grid of values to tune over
 tuning_grid <- grid_regular(
-  mtry(range=c(1,5)),
-  min_n(),
+  Laplace(),
+  smoothness(),
   levels = 5)
 
 ## Split data for CV
 folds <- vfold_cv(train, v = 5, repeats=1)
 
 ## Run the CV
-cv_results <- rand_forest_wf %>%
+cv_results <- bayes_wf %>%
   tune_grid(resamples=folds,
             grid=tuning_grid,
             metrics=metric_set(accuracy))
@@ -75,8 +77,8 @@ best_params <- cv_results %>%
 
 print(best_params)
 
-# Fit workflow
-final_wf <- rand_forest_wf %>%
+## Fit workflow
+final_wf <- bayes_wf %>%
   finalize_workflow(best_params) %>%
   fit(data = train)
 
@@ -86,7 +88,8 @@ output <- predict(final_wf, new_data=test, type='class') %>%
   rename(type=.pred_class) %>%
   select(id, type)
 
-vroom::vroom_write(output,'./outputs/random_forest_preds.csv',delim=',')
+#LS: penalty, then mixture
+vroom::vroom_write(output,'./outputs/naive_bayes_predictions.csv',delim=',')
 
 if(PARALLEL){
   stopCluster(cl)

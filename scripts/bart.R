@@ -6,7 +6,6 @@ library(tidyverse)
 library(tidymodels)
 library(doParallel)
 
-#setwd('..')
 source('./scripts/ggg_analysis.R')
 PARALLEL <- T
 
@@ -19,14 +18,15 @@ train <- prep_df(vroom::vroom('./data/train.csv'))
 test <- prep_df(vroom::vroom('./data/test.csv'))
 
 #########################
-## Feature Engineering ## 
+## Feature Engineering ##
 #########################
 
 set.seed(843)
 
 ## parallel tune grid
+
 if(PARALLEL){
-  cl <- makePSOCKcluster(8)
+  cl <- makePSOCKcluster(10)
   registerDoParallel(cl)
 }
 
@@ -38,33 +38,38 @@ bake(prepped_recipe, new_data=train)
 bake(prepped_recipe, new_data=test)
 
 #########################
-####### Fit Model #######
+## Fit Regression Model #
 #########################
 
-## Define model
-rand_forest_model <- rand_forest(
-  mtry = tune(),
-  min_n = tune(),
-  trees = 1000
-  ) %>%
-  set_engine("ranger") %>%
+# Define model
+bart_model <- 
+  parsnip::bart(
+    trees = 250,
+    prior_terminal_node_coef = tune(), #0.75,
+    prior_terminal_node_expo = tune()  #1.75,
+  ) %>% 
+  set_engine("dbarts") %>% 
   set_mode("classification")
 
 ## Define workflow
-rand_forest_wf <- workflow(prepped_recipe) %>%
-  add_model(rand_forest_model)
+# Transform response to get different cutoff
+bart_workflow <-
+  workflow(prepped_recipe) %>%
+  add_model(bart_model)
 
-## Grid of values to tune over
+# Grid of values to tune over
 tuning_grid <- grid_regular(
-  mtry(range=c(1,5)),
-  min_n(),
-  levels = 5)
+  #trees(),
+  prior_terminal_node_coef(),
+  prior_terminal_node_expo(),
+  levels = 4#7#0 #10^2 tuning possibilities
+)
 
 ## Split data for CV
-folds <- vfold_cv(train, v = 5, repeats=1)
+folds <- vfold_cv(train, v = 4, repeats=1)
 
 ## Run the CV
-cv_results <- rand_forest_wf %>%
+cv_results <- bart_workflow %>%
   tune_grid(resamples=folds,
             grid=tuning_grid,
             metrics=metric_set(accuracy))
@@ -75,8 +80,8 @@ best_params <- cv_results %>%
 
 print(best_params)
 
-# Fit workflow
-final_wf <- rand_forest_wf %>%
+## Fit workflow
+final_wf <- bart_workflow %>%
   finalize_workflow(best_params) %>%
   fit(data = train)
 
@@ -86,7 +91,8 @@ output <- predict(final_wf, new_data=test, type='class') %>%
   rename(type=.pred_class) %>%
   select(id, type)
 
-vroom::vroom_write(output,'./outputs/random_forest_preds.csv',delim=',')
+#LS: penalty, then mixture
+vroom::vroom_write(output,'./outputs/bart_predictions.csv',delim=',')
 
 if(PARALLEL){
   stopCluster(cl)

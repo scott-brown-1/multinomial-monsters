@@ -6,7 +6,6 @@ library(tidyverse)
 library(tidymodels)
 library(doParallel)
 
-#setwd('..')
 source('./scripts/ggg_analysis.R')
 PARALLEL <- T
 
@@ -56,7 +55,7 @@ svm_wf <- workflow() %>%
 
 ## Grid of values to tune over
 tuning_grid <- grid_regular(
-  degree(),#rbf_sigma(),
+  rbf_sigma(),
   cost(),
   levels = 5)
 
