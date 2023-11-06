@@ -15,7 +15,7 @@ prep_df <- function(df) {
   return(df)
 }
 
-setup_train_recipe <- function(df, encode=T, pca_threshold=0.85){ #impute=F
+setup_train_recipe <- function(df, encode=T, pca_threshold=0.85, scale_to_unit=F){ #impute=F
   if(pca_threshold > 0) encode <- T
   
   prelim_ft_eng <- recipe(type~., data=df) %>%
@@ -44,6 +44,12 @@ setup_train_recipe <- function(df, encode=T, pca_threshold=0.85){ #impute=F
   if(pca_threshold > 0){
     prelim_ft_eng <- prelim_ft_eng %>%
       step_pca(all_predictors(), threshold=pca_threshold)
+  }
+  
+  ## Scale to [0,1]
+  if(scale_to_unit){
+    prelim_ft_eng <- prelim_ft_eng %>%
+      step_range(all_numeric_predictors(), min=0, max=1)
   }
   
   # Set up preprocessing
