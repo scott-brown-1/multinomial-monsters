@@ -6,6 +6,7 @@ library(tidyverse)
 library(tidymodels)
 library(doParallel)
 
+setwd('..')
 source('./scripts/ggg_analysis.R')
 PARALLEL <- F
 
