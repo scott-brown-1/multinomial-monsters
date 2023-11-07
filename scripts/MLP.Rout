@@ -47,7 +47,7 @@ Type 'q()' to quit R.
 ✖ dplyr::lag()      masks stats::lag()
 ✖ yardstick::spec() masks readr::spec()
 ✖ recipes::step()   masks stats::step()
-• Search for functions across packages at https://www.tidymodels.org/find/
+• Dig deeper into tidy modeling with R at https://www.tmwr.org
 > library(doParallel)
 Loading required package: foreach
 
@@ -145,10 +145,10 @@ dbl (5): id, bone_length, rotting_flesh, hair_length, has_soul
 > mlp_model <- mlp(
 +   hidden_units = tune(),
 +   epochs = 75, #or 100 or 2507
-+   #activation="relu"
++   activation="relu"
 +   ) %>%
-+   set_engine("nnet", verbose=0) %>%
-+   #set_engine("keras", verbose=0) %>%
++   #set_engine("nnet", verbose=0) %>%
++   set_engine("keras", verbose=0) %>%
 +   set_mode('classification')
 > 
 > ## Define workflow
@@ -169,6 +169,36 @@ dbl (5): id, bone_length, rotting_flesh, hair_length, has_soul
 +   tune_grid(resamples=folds,
 +             grid=tuning_grid,
 +             metrics=metric_set(accuracy))
+2023-11-06 17:02:11.854673: I tensorflow/core/platform/cpu_feature_guard.cc:182] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2023-11-06 17:02:14.474078: I tensorflow/core/common_runtime/process_util.cc:146] Creating new thread pool with default inter op setting: 2. Tune using inter_op_parallelism_threads for best performance.
+1/3 [=========>....................] - ETA: 0s3/3 [==============================] - 0s 22ms/step
+1/3 [=========>....................] - ETA: 0s3/3 [==============================] - 0s 15ms/step
+1/3 [=========>....................] - ETA: 0s3/3 [==============================] - 0s 14ms/step
+1/3 [=========>....................] - ETA: 0s3/3 [==============================] - 0s 22ms/step
+WARNING:tensorflow:5 out of the last 13 calls to <function Model.make_predict_function.<locals>.predict_function at 0x7f4f24535ab0> triggered tf.function retracing. Tracing is expensive and the excessive number of tracings could be due to (1) creating @tf.function repeatedly in a loop, (2) passing tensors with different shapes, (3) passing Python objects instead of tensors. For (1), please define your @tf.function outside of the loop. For (2), @tf.function has reduce_retracing=True option that can avoid unnecessary retracing. For (3), please refer to https://www.tensorflow.org/guide/function#controlling_retracing and https://www.tensorflow.org/api_docs/python/tf/function for  more details.
+1/3 [=========>....................] - ETA: 0s3/3 [==============================] - 0s 17ms/step
+WARNING:tensorflow:5 out of the last 13 calls to <function Model.make_predict_function.<locals>.predict_function at 0x7f4f047ea560> triggered tf.function retracing. Tracing is expensive and the excessive number of tracings could be due to (1) creating @tf.function repeatedly in a loop, (2) passing tensors with different shapes, (3) passing Python objects instead of tensors. For (1), please define your @tf.function outside of the loop. For (2), @tf.function has reduce_retracing=True option that can avoid unnecessary retracing. For (3), please refer to https://www.tensorflow.org/guide/function#controlling_retracing and https://www.tensorflow.org/api_docs/python/tf/function for  more details.
+1/3 [=========>....................] - ETA: 0s3/3 [==============================] - 0s 22ms/step
+1/3 [=========>....................] - ETA: 0s3/3 [==============================] - 0s 19ms/step
+1/3 [=========>....................] - ETA: 0s3/3 [==============================] - 0s 14ms/step
+1/3 [=========>....................] - ETA: 0s3/3 [==============================] - 0s 20ms/step
+1/3 [=========>....................] - ETA: 0s3/3 [==============================] - 0s 2ms/step
+1/3 [=========>....................] - ETA: 0s3/3 [==============================] - 0s 2ms/step
+1/3 [=========>....................] - ETA: 0s3/3 [==============================] - 0s 2ms/step
+1/3 [=========>....................] - ETA: 0s3/3 [==============================] - 0s 24ms/step
+1/3 [=========>....................] - ETA: 0s3/3 [==============================] - 0s 17ms/step
+1/3 [=========>....................] - ETA: 0s3/3 [==============================] - 0s 18ms/step
+1/3 [=========>....................] - ETA: 0s3/3 [==============================] - 0s 20ms/step
+1/3 [=========>....................] - ETA: 0s3/3 [==============================] - 0s 3ms/step
+1/3 [=========>....................] - ETA: 0s3/3 [==============================] - 0s 6ms/step
+1/3 [=========>....................] - ETA: 0s3/3 [==============================] - 0s 20ms/step
+1/3 [=========>....................] - ETA: 0s3/3 [==============================] - 0s 19ms/step
+1/3 [=========>....................] - ETA: 0s3/3 [==============================] - 0s 21ms/step
+1/3 [=========>....................] - ETA: 0s3/3 [==============================] - 0s 19ms/step
+1/3 [=========>....................] - ETA: 0s3/3 [==============================] - 0s 14ms/step
+1/3 [=========>....................] - ETA: 0s3/3 [==============================] - 0s 3ms/step
+1/3 [=========>....................] - ETA: 0s3/3 [==============================] - 0s 2ms/step
 > 
 > ## Find optimal tuning params
 > best_params <- cv_results %>%
@@ -178,7 +208,7 @@ dbl (5): id, bone_length, rotting_flesh, hair_length, has_soul
 # A tibble: 1 × 2
   hidden_units .config             
          <int> <chr>               
-1            1 Preprocessor1_Model1
+1           22 Preprocessor1_Model4
 > 
 > hidden_unit_plot <- cv_results %>% 
 +   collect_metrics() %>%
@@ -199,6 +229,7 @@ Saving 7 x 7 in image
 +   bind_cols(., test) %>%
 +   rename(type=.pred_class) %>%
 +   select(id, type)
+ 1/17 [>.............................] - ETA: 0s11/17 [==================>...........] - ETA: 0s17/17 [==============================] - 0s 5ms/step
 > 
 > #LS: penalty, then mixture
 > vroom::vroom_write(output,'./outputs/mlp_predictions.csv',delim=',')
@@ -208,5 +239,5 @@ Saving 7 x 7 in image
 + }
 > 
 > proc.time()
-   user  system elapsed 
-  7.446   0.316   8.002 
+    user   system  elapsed 
+2100.269 3498.349  160.347 

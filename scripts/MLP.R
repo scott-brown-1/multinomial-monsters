@@ -47,10 +47,10 @@ bake(prepped_recipe, new_data=test)
 mlp_model <- mlp(
   hidden_units = tune(),
   epochs = 75, #or 100 or 2507
-  #activation="relu"
+  activation="relu"
   ) %>%
-  set_engine("nnet", verbose=0) %>%
-  #set_engine("keras", verbose=0) %>%
+  #set_engine("nnet", verbose=0) %>%
+  set_engine("keras", verbose=0) %>%
   set_mode('classification')
 
 ## Define workflow
