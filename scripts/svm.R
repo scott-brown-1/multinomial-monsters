@@ -30,7 +30,7 @@ if(PARALLEL){
 }
 
 ## Set up preprocessing
-prepped_recipe <- setup_train_recipe(train, encode=T, pca_threshold=0.8)
+prepped_recipe <- setup_train_recipe(train, encode=T, pca_threshold=0.85, scale_to_unit = T)
 
 ## Bake recipe
 bake(prepped_recipe, new_data=train)
@@ -60,7 +60,7 @@ tuning_grid <- grid_regular(
   levels = 5)
 
 ## Split data for CV
-folds <- vfold_cv(train, v = 5, repeats = 2)
+folds <- vfold_cv(train, v = 5, repeats = 1)
 
 ## Run the CV
 cv_results <- svm_wf %>%

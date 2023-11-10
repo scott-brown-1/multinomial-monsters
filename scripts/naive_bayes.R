@@ -22,7 +22,7 @@ test <- prep_df(vroom::vroom('./data/test.csv'))
 ## Feature Engineering ## 
 #########################
 
-set.seed(42)
+set.seed(843)
 
 ## parallel tune grid
 
@@ -32,7 +32,7 @@ if(PARALLEL){
 }
 
 ## Set up preprocessing
-prepped_recipe <- setup_train_recipe(train, encode=T, pca_threshold=0.8)
+prepped_recipe <- setup_train_recipe(train, encode=T, pca_threshold=0, scale_to_unit = F)
 
 ## Bake recipe
 bake(prepped_recipe, new_data=train)
@@ -44,8 +44,8 @@ bake(prepped_recipe, new_data=test)
 
 ## Define model
 bayes_model <- naive_Bayes(
-  Laplace=tune(),
-  smoothness=tune()) %>%
+  Laplace=0,#tune(),
+  smoothness=1.6) %>% #tune()) %>%
   set_engine("naivebayes") %>%
   set_mode("classification")
 
@@ -56,12 +56,12 @@ bayes_wf <- workflow() %>%
 
 ## Grid of values to tune over
 tuning_grid <- grid_regular(
-  Laplace(),
+  #Laplace(),
   smoothness(),
-  levels = 5)
+  levels = 4)
 
 ## Split data for CV
-folds <- vfold_cv(train, v = 5, repeats=1)
+folds <- vfold_cv(train, v = 4, repeats=1)
 
 ## Run the CV
 cv_results <- bayes_wf %>%
@@ -77,7 +77,7 @@ print(best_params)
 
 ## Fit workflow
 final_wf <- bayes_wf %>%
-  finalize_workflow(best_params) %>%
+  #finalize_workflow(best_params) %>%
   fit(data = train)
 
 ## Predict new y
